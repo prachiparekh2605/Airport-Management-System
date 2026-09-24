@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Gates Management - SkyOps{% endblock %}
+{% block page_title %}Boarding Gates{% endblock %}
+{% block page_subtitle %}Allocate and monitor departure/arrival gates linked to terminals{% endblock %}
+
+{% block content %}
+<div class="card-custom">
+  <div class="card-custom-header">
+    <div class="card-custom-title">
+      <i class="bi bi-door-open text-info"></i> Boarding Gates Directory
+      <span class="badge bg-secondary bg-opacity-50 text-light ms-2">{{ gates | length }} total</span>
+    </div>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="search-input-group">
+        <i class="bi bi-search"></i>
+        <input type="text" class="search-input table-search-input" data-table="gatesTable" placeholder="Search gate number, terminal...">
+      </div>
+
+      <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addGateModal">
+        <i class="bi bi-plus-lg"></i> Add New Gate
+      </button>
+    </div>
+  </div>
+
+  <div class="table-custom-wrapper">
+    <table class="table-custom" id="gatesTable">
+      <thead>
+        <tr>
+          <th>Gate ID</th>
+          <th>Gate Number</th>
+          <th>Assigned Terminal</th>
+          <th>Terminal Location</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in gates %}
+        <tr>
+          <td><span class="badge bg-dark border border-secondary text-info">#{{ g.Gate_ID }}</span></td>
+          <td>
+            <span class="badge bg-primary bg-opacity-20 text-info border border-info border-opacity-25 fs-6 px-3 py-1">
+              <i class="bi bi-door-closed me-1"></i>Gate {{ g.Gate_Number }}
+            </span>
+          </td>
+          <td class="fw-semibold text-white">{{ g.Terminal_Name }}</td>
+          <td><span class="text-secondary"><i class="bi bi-geo-alt me-1"></i>{{ g.Terminal_Location }}</span></td>
+          <td class="text-end">
+            <div class="d-inline-flex gap-1">
+              <button 
+                class="btn btn-outline-info btn-sm-action" 
+                data-bs-toggle="modal" 
+                data-bs-target="#editGateModal"
+                data-id="{{ g.Gate_ID }}"
+                data-number="{{ g.Gate_Number }}"
+                data-terminal="{{ g.Terminal_ID }}"
+                onclick="populateEditGate(this)"
+              >
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <form method="POST" action="{{ url_for('delete_gate', gate_id=g.Gate_ID) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete gate {{ g.Gate_Number }}?');">
+                <button type="submit" class="btn btn-danger-custom btn-sm-action">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="text-center py-4 text-muted">No gates registered yet.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Gate Modal -->
+<div class="modal fade" id="addGateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border border-secondary text-light">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white"><i class="bi bi-plus-circle text-info me-2"></i>Add Boarding Gate</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" action="{{ url_for('add_gate') }}">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Gate Number / Code *</label>
+            <input type="text" name="gate_number" class="form-control-custom" placeholder="e.g. A3 or B12" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assigned Terminal *</label>
+            <select name="terminal_id" class="form-select-custom" required>
+              <option value="" disabled selected>-- Select Related Terminal --</option>
+              {% for t in terminals %}
+              <option value="{{ t.Terminal_ID }}">{{ t.Name }} ({{ t.Location }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Save Gate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Gate Modal -->
+<div class="modal fade" id="editGateModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border border-secondary text-light">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white"><i class="bi bi-pencil-square text-info me-2"></i>Edit Gate</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="POST" id="editGateForm" action="">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Gate Number *</label>
+            <input type="text" id="edit_gate_number" name="gate_number" class="form-control-custom" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assigned Terminal *</label>
+            <select id="edit_terminal_id" name="terminal_id" class="form-select-custom" required>
+              {% for t in terminals %}
+              <option value="{{ t.Terminal_ID }}">{{ t.Name }} ({{ t.Location }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-secondary-custom" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary-custom">Update Gate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function populateEditGate(btn) {
+  const id = btn.getAttribute('data-id');
+  document.getElementById('editGateForm').action = "/gates/edit/" + id;
+  document.getElementById('edit_gate_number').value = btn.getAttribute('data-number');
+  document.getElementById('edit_terminal_id').value = btn.getAttribute('data-terminal');
+}
+</script>
+{% endblock %}

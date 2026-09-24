@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Login - SkyOps Airport Management System</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Bootstrap 5 CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="login-body">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-brand-icon">
+        <i class="bi bi-airplane-engines"></i>
+      </div>
+      <h2 class="fw-bold text-white mb-1">SkyOps Hub</h2>
+      <p class="text-secondary small mb-0">Airport Staff Authentication Portal</p>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show py-2 px-3 small" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-1"></i> {{ message }}
+            <button type="button" class="btn-close btn-close-white small p-2" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}" autocomplete="off">
+      <div class="mb-3">
+        <label for="username" class="form-label">
+          <i class="bi bi-person me-1 text-info"></i> Employee Username
+        </label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username" 
+          class="form-control-custom" 
+          placeholder="e.g. rajesh" 
+          required 
+          autofocus
+        >
+      </div>
+
+      <div class="mb-4">
+        <label for="password" class="form-label">
+          <i class="bi bi-lock me-1 text-info"></i> Password
+        </label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="form-control-custom" 
+          placeholder="Enter your password" 
+          required
+        >
+      </div>
+
+      <button type="submit" class="btn btn-primary-custom w-100 py-2 justify-content-center">
+        <i class="bi bi-box-arrow-in-right me-2 fs-5"></i> Secure Staff Sign In
+      </button>
+    </form>
+
+    <!-- Quick Credentials Helper for Testing/Demo -->
+    <div class="quick-login-pills">
+      <div class="text-secondary small fw-semibold mb-2 text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.05em;">
+        <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick Test Credentials:
+      </div>
+      <div class="d-flex flex-wrap">
+        <button type="button" class="pill-btn" onclick="fillLogin('rajesh', 'Rajesh@123')">
+          Rajesh (Admin)
+        </button>
+        <button type="button" class="pill-btn" onclick="fillLogin('priya', 'Priya@123')">
+          Priya (Check-In)
+        </button>
+        <button type="button" class="pill-btn" onclick="fillLogin('amit', 'Amit@123')">
+          Amit (Security)
+        </button>
+        <button type="button" class="pill-btn" onclick="fillLogin('neha', 'Neha@123')">
+          Neha (Flight Coord)
+        </button>
+        <button type="button" class="pill-btn" onclick="fillLogin('vikram', 'Vikram@123')">
+          Vikram (Baggage)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
