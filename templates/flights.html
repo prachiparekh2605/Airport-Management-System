@@ -11,14 +11,19 @@
       <i class="bi bi-airplane text-info"></i> Flights Schedule Board
       <span class="badge bg-secondary bg-opacity-50 text-light ms-2">{{ flights | length }} total</span>
     </div>
-    <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
       <div class="search-input-group">
         <i class="bi bi-search"></i>
         <input type="text" class="search-input table-search-input" data-table="flightsTable" placeholder="Search flight #, airline, city, status...">
+        <span class="search-shortcut-badge">/</span>
       </div>
 
+      <button type="button" class="btn-export-csv" onclick="exportTableToCSV('flightsTable', 'flight_schedule_manifest')">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
+
       <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addFlightModal">
-        <i class="bi bi-plus-lg"></i> Schedule New Flight
+        <i class="bi bi-plus-lg"></i> Schedule Flight
       </button>
     </div>
   </div>
@@ -62,9 +67,9 @@
           <td>
             {% set st = f.Status | lower %}
             {% if 'board' in st %}
-              <span class="badge-status badge-boarding"><i class="bi bi-hourglass-split"></i> {{ f.Status }}</span>
+              <span class="badge-status badge-boarding"><span class="pulse-beacon pulse-amber"></span> {{ f.Status }}</span>
             {% elif 'time' in st or 'sched' in st %}
-              <span class="badge-status badge-ontime"><i class="bi bi-check2"></i> {{ f.Status }}</span>
+              <span class="badge-status badge-ontime"><span class="pulse-beacon"></span> {{ f.Status }}</span>
             {% elif 'delay' in st %}
               <span class="badge-status badge-delayed"><i class="bi bi-exclamation-triangle"></i> {{ f.Status }}</span>
             {% elif 'cancel' in st %}

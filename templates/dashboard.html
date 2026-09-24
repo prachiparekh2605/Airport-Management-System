@@ -120,12 +120,17 @@
     <div class="card-custom">
       <div class="card-custom-header">
         <div class="card-custom-title">
-          <i class="bi bi-broadcast text-info"></i> Flight Schedule Board
+          <i class="bi bi-broadcast text-info"></i> Live Flight Schedule Board
         </div>
-        <a href="{{ url_for('flights') }}" class="btn btn-outline-secondary btn-sm py-1">View All</a>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn-export-csv" onclick="exportTableToCSV('dashboardFlightsTable', 'live_flights_schedule')">
+            <i class="bi bi-download"></i> Export CSV
+          </button>
+          <a href="{{ url_for('flights') }}" class="btn btn-outline-secondary btn-sm py-1">View All</a>
+        </div>
       </div>
       <div class="table-custom-wrapper">
-        <table class="table-custom">
+        <table class="table-custom" id="dashboardFlightsTable">
           <thead>
             <tr>
               <th>Flight</th>
@@ -150,9 +155,9 @@
               <td>
                 {% set st = f.Status | lower %}
                 {% if 'board' in st %}
-                  <span class="badge-status badge-boarding"><i class="bi bi-hourglass-split"></i> {{ f.Status }}</span>
+                  <span class="badge-status badge-boarding"><span class="pulse-beacon pulse-amber"></span> {{ f.Status }}</span>
                 {% elif 'time' in st or 'sched' in st %}
-                  <span class="badge-status badge-ontime"><i class="bi bi-check2"></i> {{ f.Status }}</span>
+                  <span class="badge-status badge-ontime"><span class="pulse-beacon"></span> {{ f.Status }}</span>
                 {% elif 'delay' in st %}
                   <span class="badge-status badge-delayed"><i class="bi bi-exclamation-triangle"></i> {{ f.Status }}</span>
                 {% else %}

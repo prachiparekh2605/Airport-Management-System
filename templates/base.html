@@ -119,9 +119,28 @@
         </div>
 
         <div class="navbar-actions">
-          <span class="badge bg-dark border border-secondary text-info px-3 py-2 rounded-pill d-none d-md-inline-flex align-items-center gap-2">
+          <!-- Real-Time Airport Operations Clock (Local & UTC) -->
+          <div class="ops-clock-container d-none d-lg-flex">
+            <div class="ops-clock-item">
+              <span class="ops-clock-label">LOCAL</span>
+              <span id="opsClockLocal">--:--:-- LOC</span>
+            </div>
+            <span class="text-secondary opacity-50">|</span>
+            <div class="ops-clock-item">
+              <span class="ops-clock-label" style="color: #a5b4fc; background: rgba(99, 102, 241, 0.15);">UTC</span>
+              <span id="opsClockUTC" class="text-secondary">--:--:-- UTC</span>
+            </div>
+          </div>
+
+          <!-- Live Operational Status Pulse -->
+          <div class="ops-status-pulse d-none d-md-inline-flex">
+            <span class="pulse-beacon"></span>
+            <span>HUB ONLINE</span>
+          </div>
+
+          <span class="badge bg-dark border border-secondary text-info px-3 py-2 rounded-pill d-none d-xl-inline-flex align-items-center gap-2">
             <i class="bi bi-database"></i>
-            <span>DB: airport_managment_system</span>
+            <span>airport_managment_system</span>
           </span>
 
           <div class="dropdown">

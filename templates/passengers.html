@@ -11,11 +11,16 @@
       <i class="bi bi-people text-info"></i> Passenger Manifest
       <span class="badge bg-secondary bg-opacity-50 text-light ms-2">{{ passengers | length }} total</span>
     </div>
-    <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
       <div class="search-input-group">
         <i class="bi bi-search"></i>
         <input type="text" class="search-input table-search-input" data-table="passengersTable" placeholder="Search passenger name, passport #, phone...">
+        <span class="search-shortcut-badge">/</span>
       </div>
+
+      <button type="button" class="btn-export-csv" onclick="exportTableToCSV('passengersTable', 'passenger_manifest')">
+        <i class="bi bi-download"></i> Export CSV
+      </button>
 
       <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#addPassengerModal">
         <i class="bi bi-person-plus"></i> Register Passenger
