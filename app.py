@@ -88,9 +88,9 @@ def index():
 @app.route('/api/index.py')
 @app.route('/api')
 def vercel_entry_fallback():
-    if 'employee_id' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    import json
+    env_dump = {k: str(v) for k, v in request.environ.items() if not k.startswith('wsgi.')}
+    return json.dumps(env_dump, indent=2), 200, {'Content-Type': 'application/json'}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
