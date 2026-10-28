@@ -21,3 +21,6 @@ ENV/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Vercel Deployment Cache & Metadata
+.vercel/

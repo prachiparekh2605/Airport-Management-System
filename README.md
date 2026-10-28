@@ -78,3 +78,41 @@ Log in with username `rajesh` and password `Rajesh@123`.
 - **Passenger 360° View**: Unified relational view showing a passenger's complete lifecycle across Bookings, Flights, Check-in, Baggage, and Security screening.
 - **Search & Filtering**: Real-time instant filtering across every data table.
 - **Safe SQL Execution**: 100% parameterized queries (`%s`) preventing SQL injection.
+
+---
+
+## ☁️ Deploying to Vercel
+
+This application is configured for deployment on **Vercel Serverless Functions**.
+
+### 1. Dual Database Engine (MySQL + Instant Zero-Config SQLite)
+- **Zero-Config Cloud Preview (Default on Vercel)**:
+  The project includes a pre-seeded SQLite database (`database/airport.db`) containing all 10 relational tables and sample records. When deployed to Vercel without external credentials, the app **automatically uses SQLite** out of the box—no external cloud setup required!
+- **Cloud MySQL (Production)**:
+  If you want to connect to a live cloud MySQL database, you can connect any cloud MySQL service (such as [TiDB Cloud](https://tidbcloud.com/), [Aiven](https://aiven.io/), or [Railway](https://railway.app/)) by setting the environment variables below.
+
+### 2. Set Environment Variables in Vercel
+In your Vercel Project Dashboard under **Settings > Environment Variables**, add:
+
+| Key | Example Value | Description |
+|---|---|---|
+| `MYSQL_HOST` | `your-db-host.aivencloud.com` | Cloud MySQL host domain |
+| `MYSQL_PORT` | `3306` | MySQL port |
+| `MYSQL_USER` | `avnadmin` | MySQL username |
+| `MYSQL_PASSWORD` | `your_secret_password` | MySQL password |
+| `MYSQL_DB` | `airport_managment_system` | Database name |
+| `MYSQL_SSL` | `true` | Enable SSL encryption for cloud DB |
+| `SECRET_KEY` | *(Random 32+ character string)* | Secret key for session encryption |
+
+### 3. Deploy via GitHub or Vercel CLI
+- **Option A (GitHub Integration - Recommended)**:
+  1. Push this repository to GitHub.
+  2. Go to [vercel.com/new](https://vercel.com/new) and import the repository.
+  3. Add the Environment Variables listed above.
+  4. Click **Deploy**.
+
+- **Option B (Vercel CLI)**:
+  ```bash
+  npx vercel
+  ```
+  Follow the on-screen prompts to link your Vercel account and deploy.

@@ -14,5 +14,6 @@ class Config:
     MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD', '')
     MYSQL_DB = os.getenv('MYSQL_DB', 'airport_managment_system')
     
-    # Connection timeout settings
-    MYSQL_CONNECT_TIMEOUT = 5
+    # Connection timeout settings & SSL for Cloud MySQL (Aiven, TiDB, PlanetScale, Railway, AWS RDS)
+    MYSQL_CONNECT_TIMEOUT = int(os.getenv('MYSQL_CONNECT_TIMEOUT', 5))
+    MYSQL_SSL = os.getenv('MYSQL_SSL', 'false').lower() in ('true', '1', 'yes', 'required')
