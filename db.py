@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import sqlite3
+from datetime import datetime, date
 import pymysql
 import pymysql.cursors
 from config import Config
@@ -26,11 +27,12 @@ def get_sqlite_path():
     if is_cloud_serverless():
         tmp_dir = tempfile.gettempdir()
         tmp_db = os.path.join(tmp_dir, 'airport.db')
-        if not os.path.exists(tmp_db) and os.path.exists(SQLITE_SOURCE_DB):
-            try:
-                shutil.copyfile(SQLITE_SOURCE_DB, tmp_db)
-            except Exception as e:
-                print(f"[SQLite] Warning copying DB to temp: {e}")
+        if os.path.exists(SQLITE_SOURCE_DB):
+            if not os.path.exists(tmp_db) or os.path.getmtime(SQLITE_SOURCE_DB) > os.path.getmtime(tmp_db):
+                try:
+                    shutil.copyfile(SQLITE_SOURCE_DB, tmp_db)
+                except Exception as e:
+                    print(f"[SQLite] Warning copying DB to temp: {e}")
         return tmp_db if os.path.exists(tmp_db) else SQLITE_SOURCE_DB
     return SQLITE_SOURCE_DB
 
@@ -46,6 +48,13 @@ def is_sqlite_mode():
         return True
     return False
 
+def connect_sqlite():
+    """Create SQLite connection with Dict/Row factory and MySQL CONCAT compatibility"""
+    conn = sqlite3.connect(get_sqlite_path())
+    conn.row_factory = sqlite3.Row
+    conn.create_function("CONCAT", -1, lambda *args: "".join(str(a) if a is not None else "" for a in args))
+    return conn
+
 def get_db_connection():
     """
     Establish and return a connection.
@@ -53,9 +62,7 @@ def get_db_connection():
     If MySQL connection fails with connection refused (e.g. 2003), falls back to SQLite.
     """
     if is_sqlite_mode():
-        conn = sqlite3.connect(get_sqlite_path())
-        conn.row_factory = sqlite3.Row
-        return conn
+        return connect_sqlite()
 
     conn_params = {
         'host': Config.MYSQL_HOST,
@@ -79,9 +86,7 @@ def get_db_connection():
         # Catch any MySQL unreachable / connection refused / timeout / DNS failure
         if code in (2003, 2002, 2005) or 'Connection refused' in err_msg or 'timed out' in err_msg or "Can't connect" in err_msg or 'Name or service not known' in err_msg:
             print(f"[Notice] MySQL at {Config.MYSQL_HOST} unreachable ({err_msg}). Falling back to embedded SQLite database.")
-            conn = sqlite3.connect(get_sqlite_path())
-            conn.row_factory = sqlite3.Row
-            return conn
+            return connect_sqlite()
         raise e
 
 def test_connection():
@@ -105,6 +110,20 @@ def test_connection():
     except Exception as e:
         return False, str(e)
 
+def parse_sqlite_val(v):
+    if isinstance(v, str):
+        if len(v) >= 19 and len(v) <= 26 and v[4] == '-' and v[7] == '-' and v[10] in ('T', ' '):
+            try:
+                return datetime.fromisoformat(v.replace(' ', 'T'))
+            except Exception:
+                pass
+        elif len(v) == 10 and v[4] == '-' and v[7] == '-':
+            try:
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except Exception:
+                pass
+    return v
+
 def query_db(query, args=(), one=False):
     """
     Run a parameterized SELECT query and return rows as dictionaries.
@@ -117,7 +136,10 @@ def query_db(query, args=(), one=False):
             cursor = conn.cursor()
             cursor.execute(sqlite_query, args)
             rows = cursor.fetchall()
-            dict_rows = [dict(row) for row in rows]
+            dict_rows = [
+                {k: parse_sqlite_val(v) for k, v in dict(row).items()}
+                for row in rows
+            ]
             return (dict_rows[0] if dict_rows else None) if one else dict_rows
         else:
             with conn.cursor() as cursor:
