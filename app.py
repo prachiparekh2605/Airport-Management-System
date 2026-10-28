@@ -13,30 +13,29 @@ app = Flask(
 )
 app.config.from_object(Config)
 
+import urllib.parse
+
 class VercelPathMiddleware:
     """
     WSGI Middleware for Vercel Serverless environment:
-    Vercel edge rewrites forward requests to /api/index.py.
-    This middleware restores the original requested path (e.g. /login, /dashboard, /static/...)
-    from Vercel headers so Flask matches pages and static assets correctly without 404s or redirects.
+    Vercel edge rewrites forward requests to /api/index.py?__path=$1.
+    This middleware extracts the '__path' query parameter and restores
+    environ['PATH_INFO'] so all Flask routes (/login, /dashboard, etc.)
+    and static files match directly.
     """
     def __init__(self, wsgi_app):
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        path_info = environ.get('PATH_INFO', '')
-        if path_info in ('/api/index', '/api/index.py', '/api', ''):
-            matched = (
-                environ.get('HTTP_X_MATCHED_PATH') or
-                environ.get('HTTP_X_VERCEL_PATH') or
-                environ.get('REQUEST_URI') or
-                environ.get('RAW_URI') or
-                environ.get('HTTP_X_FORWARDED_URI')
-            )
-            if matched:
-                path_only = matched.split('?')[0]
-                if path_only and path_only not in ('/api/index', '/api/index.py', '/api'):
-                    environ['PATH_INFO'] = path_only
+        qs = environ.get('QUERY_STRING', '')
+        if '__path=' in qs:
+            params = urllib.parse.parse_qs(qs, keep_blank_values=True)
+            if '__path' in params:
+                req_path = params.pop('__path')[0]
+                if not req_path.startswith('/'):
+                    req_path = '/' + req_path
+                environ['PATH_INFO'] = req_path
+                environ['QUERY_STRING'] = urllib.parse.urlencode(params, doseq=True)
 
         return self.wsgi_app(environ, start_response)
 
@@ -84,13 +83,6 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
-@app.route('/api/index')
-@app.route('/api/index.py')
-@app.route('/api')
-def vercel_entry_fallback():
-    import json
-    env_dump = {k: str(v) for k, v in request.environ.items() if not k.startswith('wsgi.')}
-    return json.dumps(env_dump, indent=2), 200, {'Content-Type': 'application/json'}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
