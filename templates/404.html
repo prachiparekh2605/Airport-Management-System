@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}404 - Page Not Found | SkyOps Hub{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-5">
+  <div class="col-md-8 col-lg-6 text-center">
+    <div class="card bg-dark border border-secondary shadow-lg p-5">
+      <div class="display-1 text-primary fw-bold mb-3">404</div>
+      <h2 class="text-white mb-2">Operations Page Not Found</h2>
+      <p class="text-secondary mb-4">
+        The requested airport endpoint does not exist or has been relocated.
+      </p>
+      <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary px-4 py-2 me-2">
+          <i class="bi bi-speedometer2 me-1"></i> Dashboard
+        </a>
+        <a href="{{ url_for('login') }}" class="btn btn-outline-secondary px-4 py-2">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Login
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

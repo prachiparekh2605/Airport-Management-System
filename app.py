@@ -55,6 +55,17 @@ def index():
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
 
+@app.route('/api/index')
+@app.route('/api/index.py')
+@app.route('/api')
+def vercel_entry_redirect():
+    target = request.headers.get('x-matched-path') or request.environ.get('HTTP_X_MATCHED_PATH')
+    if target and target not in ('/api/index', '/api/index.py', '/api'):
+        return redirect(target)
+    if 'employee_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -1000,7 +1011,7 @@ def delete_security(security_id):
 
 @app.errorhandler(404)
 def not_found(e):
-    return render_template('base.html', content="<div class='text-center py-5'><h2>404 - Page Not Found</h2><p class='text-secondary'>The requested operations endpoint does not exist.</p><a href='/dashboard' class='btn btn-primary-custom'>Return to Dashboard</a></div>"), 404
+    return render_template('404.html'), 404
 
 @app.errorhandler(500)
 def server_error(e):
