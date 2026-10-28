@@ -1,14 +1,21 @@
 import os
 import shutil
+import tempfile
 import sqlite3
 import pymysql
 import pymysql.cursors
 from config import Config
 
-import tempfile
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQLITE_SOURCE_DB = os.path.join(BASE_DIR, 'database', 'airport.db')
+
+def is_cloud_serverless():
+    """Detect if running in Vercel or cloud serverless environment"""
+    return bool(
+        os.environ.get('VERCEL') or
+        os.environ.get('VERCEL_ENV') or
+        os.environ.get('AWS_LAMBDA_FUNCTION_NAME')
+    )
 
 def get_sqlite_path():
     """
@@ -16,7 +23,7 @@ def get_sqlite_path():
     On Vercel, the filesystem is read-only except the temporary directory (/tmp).
     We copy the seed database to temp on cold starts so writes work without errors.
     """
-    if os.environ.get('VERCEL'):
+    if is_cloud_serverless():
         tmp_dir = tempfile.gettempdir()
         tmp_db = os.path.join(tmp_dir, 'airport.db')
         if not os.path.exists(tmp_db) and os.path.exists(SQLITE_SOURCE_DB):
@@ -35,7 +42,7 @@ def is_sqlite_mode():
     """
     if os.getenv('USE_SQLITE', 'false').lower() in ('true', '1', 'yes'):
         return True
-    if os.environ.get('VERCEL') and Config.MYSQL_HOST in ('localhost', '127.0.0.1'):
+    if is_cloud_serverless() and Config.MYSQL_HOST in ('localhost', '127.0.0.1'):
         return True
     return False
 
@@ -67,9 +74,11 @@ def get_db_connection():
     try:
         return pymysql.connect(**conn_params)
     except Exception as e:
-        # Check if error is connection error (e.g. 2003 or connection refused)
-        if hasattr(e, 'args') and len(e.args) >= 1 and (e.args[0] == 2003 or 'Connection refused' in str(e) or 'timed out' in str(e)):
-            print(f"[Notice] MySQL at {Config.MYSQL_HOST} unreachable. Falling back to embedded SQLite database.")
+        err_msg = str(e)
+        code = e.args[0] if (hasattr(e, 'args') and len(e.args) >= 1) else None
+        # Catch any MySQL unreachable / connection refused / timeout / DNS failure
+        if code in (2003, 2002, 2005) or 'Connection refused' in err_msg or 'timed out' in err_msg or "Can't connect" in err_msg or 'Name or service not known' in err_msg:
+            print(f"[Notice] MySQL at {Config.MYSQL_HOST} unreachable ({err_msg}). Falling back to embedded SQLite database.")
             conn = sqlite3.connect(get_sqlite_path())
             conn.row_factory = sqlite3.Row
             return conn
