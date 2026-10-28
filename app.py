@@ -13,6 +13,35 @@ app = Flask(
 )
 app.config.from_object(Config)
 
+class VercelPathMiddleware:
+    """
+    WSGI Middleware for Vercel Serverless environment:
+    Vercel edge rewrites forward requests to /api/index.py.
+    This middleware restores the original requested path (e.g. /login, /dashboard, /static/...)
+    from Vercel headers so Flask matches pages and static assets correctly without 404s or redirects.
+    """
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path_info = environ.get('PATH_INFO', '')
+        if path_info in ('/api/index', '/api/index.py', '/api', ''):
+            matched = (
+                environ.get('HTTP_X_MATCHED_PATH') or
+                environ.get('HTTP_X_VERCEL_PATH') or
+                environ.get('REQUEST_URI') or
+                environ.get('RAW_URI') or
+                environ.get('HTTP_X_FORWARDED_URI')
+            )
+            if matched:
+                path_only = matched.split('?')[0]
+                if path_only and path_only not in ('/api/index', '/api/index.py', '/api'):
+                    environ['PATH_INFO'] = path_only
+
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = VercelPathMiddleware(app.wsgi_app)
+
 # =========================================================================
 # Authentication Decorators
 # =========================================================================
@@ -58,10 +87,7 @@ def index():
 @app.route('/api/index')
 @app.route('/api/index.py')
 @app.route('/api')
-def vercel_entry_redirect():
-    target = request.headers.get('x-matched-path') or request.environ.get('HTTP_X_MATCHED_PATH')
-    if target and target not in ('/api/index', '/api/index.py', '/api'):
-        return redirect(target)
+def vercel_entry_fallback():
     if 'employee_id' in session:
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
